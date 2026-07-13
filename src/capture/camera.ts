@@ -1,6 +1,14 @@
 export async function startCamera(video: HTMLVideoElement): Promise<MediaStream> {
+  // Request a 4:3 stream so it matches the (4:3) camera panel and synthetic source — no
+  // aspect distortion. `ideal` constraints degrade gracefully on hardware that can't hit them.
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: 1280, height: 720, frameRate: 60 },
+    video: {
+      width: { ideal: 960 },
+      height: { ideal: 720 },
+      aspectRatio: { ideal: 4 / 3 },
+      frameRate: { ideal: 60 },
+      facingMode: 'user',
+    },
     audio: false,
   })
   video.srcObject = stream

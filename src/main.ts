@@ -19,9 +19,9 @@ const jvpEl = document.querySelector<HTMLElement>('#jvp')!
 const hudEl = document.querySelector<HTMLElement>('#hud')!
 const statusEl = document.querySelector<HTMLElement>('#status')!
 const grabCanvas = document.createElement('canvas')
+const cam = document.querySelector<HTMLElement>('#camera')!
 
-overlay.width = 480
-overlay.height = 400
+// overlay + gl backing sizes are set to the panel's real pixels by fitCanvases() below.
 waveform.width = 300
 waveform.height = 96
 
@@ -29,12 +29,15 @@ let syntheticEl: HTMLCanvasElement | null = null
 let useSynthetic = false
 let stream: MediaStream | null = null
 
-const PX_PER_CM = 45 // assumed anatomical scale for the demo (would be user-calibrated live)
 const overlayCtx = overlay.getContext('2d')!
+// Assumed anatomical scale, tied to panel height so the reading is size-independent
+// (~8 cm of neck spans ~90% of the view). Would be user-calibrated in a real setting.
+const pxPerCm = () => (overlay.height * 0.9) / 8
 
-// Draggable calibration state (overlay-canvas pixel space).
-let roiRect: Rect = { x: overlay.width * 0.52, y: overlay.height * 0.22, w: 100, h: 170 }
-let sternalYVal = overlay.height * 0.7
+// Draggable calibration state, in overlay-canvas pixel space (initialised by fitCanvases()).
+const ROI_FRAC = { x: 0.52, y: 0.22, w: 0.21, h: 0.42 }
+let roiRect: Rect = { x: 0, y: 0, w: 0, h: 0 }
+let sternalYVal = 0
 const faceRegion = (): Rect => ({ x: overlay.width * 0.2, y: overlay.height * 0.05, w: 80, h: 60 })
 const roi = () => roiRect
 const sternalY = () => sternalYVal
@@ -47,12 +50,31 @@ function redrawOverlay() {
     w: overlay.width,
     h: overlay.height,
     sternalY: sternalYVal,
-    pxPerCm: PX_PER_CM,
+    pxPerCm: pxPerCm(),
     meniscusY: roiRect.y + roiRect.h * 0.15,
     faceRegion: faceRegion(),
   })
 }
-redrawOverlay()
+
+// Size the canvases to the panel's real pixels (no CSS stretch → crisp, undistorted reticle and
+// video), and keep the ROI/sternal-line proportional across resizes.
+function fitCanvases() {
+  const cw = Math.max(1, Math.round(cam.clientWidth))
+  const ch = Math.max(1, Math.round(cam.clientHeight))
+  const pw = overlay.width, ph = overlay.height
+  overlay.width = cw; overlay.height = ch
+  gl.width = cw; gl.height = ch
+  if (!pw || !ph) {
+    roiRect = { x: ROI_FRAC.x * cw, y: ROI_FRAC.y * ch, w: ROI_FRAC.w * cw, h: ROI_FRAC.h * ch }
+    sternalYVal = 0.7 * ch
+  } else {
+    roiRect = { x: (roiRect.x * cw) / pw, y: (roiRect.y * ch) / ph, w: (roiRect.w * cw) / pw, h: (roiRect.h * ch) / ph }
+    sternalYVal = (sternalYVal * ch) / ph
+  }
+  redrawOverlay()
+}
+fitCanvases()
+new ResizeObserver(fitCanvases).observe(cam)
 
 // Drag the ROI box or the sternal-angle line (mouse + touch via pointer events).
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
@@ -112,7 +134,7 @@ const pipeline = createPipeline({
   faceRegion,
   sternalY,
   contrast,
-  pxPerCm: PX_PER_CM,
+  pxPerCm,
   fs: 30,
 })
 

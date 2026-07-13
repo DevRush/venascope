@@ -138,7 +138,7 @@ html, body {
 /* camera panel */
 .cam {
   position: relative;
-  min-height: 400px;
+  min-height: 360px; /* fills the grid row; canvases are sized to its real pixels (crisp reticle) */
   background: #0a0b0d;
   border-right: 1px solid var(--line);
   overflow: hidden;

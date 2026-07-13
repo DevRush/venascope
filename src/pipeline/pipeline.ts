@@ -24,7 +24,7 @@ export interface PipelineDeps {
   faceRegion: () => Rect
   sternalY: () => number
   contrast: () => boolean // amplified-motion ("relief") view toggle
-  pxPerCm: number
+  pxPerCm: () => number // scales with the panel so the height reading is size-independent
   fs: number
 }
 
@@ -64,9 +64,8 @@ export function createPipeline(deps: PipelineDeps) {
     }
     if (w && h) {
       try {
-      // Magnify every animation frame for a smooth live view.
-      if (deps.glCanvas.width !== w) deps.glCanvas.width = w
-      if (deps.glCanvas.height !== h) deps.glCanvas.height = h
+      // Magnify every animation frame for a smooth live view. The GL canvas backing size is
+      // owned by the layout (ResizeObserver in main), so the output matches the panel 1:1.
       magnifier.render(deps.source() as TexImageSource, deps.contrast() ? CONTRAST_MAGNIFY : MAGNIFY, 3, 30)
 
       const roi = deps.roi()
@@ -75,7 +74,7 @@ export function createPipeline(deps: PipelineDeps) {
       // Dynamic measurement overlay, also every frame (cheap, keeps the reticle smooth).
       drawOverlay(deps.overlayCtx, roi, {
         w: deps.overlayCtx.canvas.width, h: deps.overlayCtx.canvas.height,
-        sternalY: deps.sternalY(), pxPerCm: deps.pxPerCm, meniscusY,
+        sternalY: deps.sternalY(), pxPerCm: deps.pxPerCm(), meniscusY,
         faceRegion: deps.faceRegion(),
       })
 
@@ -100,7 +99,7 @@ export function createPipeline(deps: PipelineDeps) {
           if (t - lastAnalysis > 500) {
             lastAnalysis = t
             const na = neck.toArray(), aa = arterial.toArray()
-            const heightCm = (deps.sternalY() - meniscusY) / deps.pxPerCm
+            const heightCm = (deps.sternalY() - meniscusY) / deps.pxPerCm()
             const out = analyze({ neck: na, arterial: aa, fs, heightCm })
             renderIdentity(deps.identityEl, out.classification)
             renderJvp(deps.jvpEl, out.jvp)
@@ -112,7 +111,7 @@ export function createPipeline(deps: PipelineDeps) {
             const respEl = deps.jvpEl.querySelector('[data-field=resp]')
             if (respEl) {
               const respCm = respBuf.length >= fs * 5
-                ? respiratoryVariationCm(respBuf.toArray(), fs, deps.pxPerCm)
+                ? respiratoryVariationCm(respBuf.toArray(), fs, deps.pxPerCm())
                 : null
               respEl.textContent = respCm == null ? 'acquiring…' : `${respCm.toFixed(1)} cm with respiration`
             }
