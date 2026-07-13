@@ -32,6 +32,23 @@ describe('roiVerticalCentroid', () => {
     expect(y).toBeGreaterThan(48)
     expect(y).toBeLessThan(52)
   })
+
+  it('returns a finite value for a non-integer roi', () => {
+    const img = bandImage(40, 100, 48, 52) // centre ~50
+    const roi: Rect = { x: 0.4, y: 0.6, w: 39.7, h: 99.3 }
+    const y = roiVerticalCentroid(img, roi)
+    expect(Number.isFinite(y)).toBe(true)
+    expect(y).toBeGreaterThanOrEqual(0)
+    expect(y).toBeLessThan(100)
+  })
+
+  it('falls back to the clamped-roi centre on an all-zero-luminance roi', () => {
+    const img = bandImage(40, 100, 0, 0) // all black, no bright band
+    const roi: Rect = { x: 0.4, y: 0.6, w: 39.7, h: 99.3 }
+    const clamped = clampRoi(roi, img.width, img.height)
+    const y = roiVerticalCentroid(img, roi)
+    expect(y).toBe(clamped.y + clamped.h / 2)
+  })
 })
 
 describe('roiMeanLuma', () => {

@@ -1,9 +1,9 @@
 import type { Rect } from '../types'
 
 export function clampRoi(roi: Rect, w: number, h: number): Rect {
-  const x = Math.max(0, Math.min(roi.x, w - 1))
-  const y = Math.max(0, Math.min(roi.y, h - 1))
-  return { x, y, w: Math.min(roi.w, w - x), h: Math.min(roi.h, h - y) }
+  const x = Math.floor(Math.max(0, Math.min(roi.x, w - 1)))
+  const y = Math.floor(Math.max(0, Math.min(roi.y, h - 1)))
+  return { x, y, w: Math.floor(Math.min(roi.w, w - x)), h: Math.floor(Math.min(roi.h, h - y)) }
 }
 
 const luma = (r: number, g: number, b: number) => 0.299 * r + 0.587 * g + 0.114 * b
