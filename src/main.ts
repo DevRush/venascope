@@ -4,7 +4,7 @@ import { startCamera, stopCamera } from './capture/camera'
 import { loadDemoClip, createSyntheticSource } from './demo/demoClip'
 import { createPipeline } from './pipeline/pipeline'
 import { analyze } from './pipeline/analyze'
-import { renderIdentity, renderCvp } from './ui/panels'
+import { renderIdentity, renderJvp } from './ui/panels'
 import { drawWaveform } from './ui/waveform'
 import type { Mode, Rect } from './types'
 
@@ -13,7 +13,7 @@ const gl = document.querySelector<HTMLCanvasElement>('#gl')!
 const overlay = document.querySelector<HTMLCanvasElement>('#overlay')!
 const waveform = document.querySelector<HTMLCanvasElement>('#waveform')!
 const identityEl = document.querySelector<HTMLElement>('#identity')!
-const cvpEl = document.querySelector<HTMLElement>('#cvp')!
+const jvpEl = document.querySelector<HTMLElement>('#jvp')!
 const statusEl = document.querySelector<HTMLElement>('#status')!
 const grabCanvas = document.createElement('canvas')
 
@@ -50,11 +50,11 @@ const pipeline = createPipeline({
   overlayCtx: overlay.getContext('2d')!,
   waveformCtx: waveform.getContext('2d')!,
   identityEl,
-  cvpEl,
+  jvpEl,
   roi,
   faceRegion,
   sternalY,
-  pxPerCm: 20,
+  pxPerCm: 45, // assumed anatomical scale for the demo (would be user-calibrated live)
   fs: 30,
 })
 
@@ -110,6 +110,17 @@ async function setMode(m: Mode) {
 document.querySelector('#mode-live')?.addEventListener('click', () => setMode('live'))
 document.querySelector('#mode-demo')?.addEventListener('click', () => setMode('demo'))
 
+// First-run explainer: show once, reopenable via the header "?".
+const intro = document.querySelector<HTMLElement>('#intro')
+const showIntro = () => intro?.removeAttribute('hidden')
+const hideIntro = () => intro?.setAttribute('hidden', '')
+document.querySelector('#intro-start')?.addEventListener('click', () => {
+  hideIntro()
+  try { localStorage.setItem('jvp-intro-seen', '1') } catch { /* private mode */ }
+})
+document.querySelector('#help')?.addEventListener('click', showIntro)
+try { if (!localStorage.getItem('jvp-intro-seen')) showIntro() } catch { showIntro() }
+
 // DEV-only render probe: runs one real analyze() cycle on the demo signals and paints
 // the panels, so the render path can be verified where rAF is throttled (hidden tab).
 if (import.meta.env.DEV) {
@@ -119,14 +130,14 @@ if (import.meta.env.DEV) {
     const wave = (tt: number) => Math.sin(2 * Math.PI * 1.2 * tt) + 0.35 * Math.sin(2 * Math.PI * 2.4 * tt)
     const arterial = Array.from({ length: N }, (_, i) => wave(i / fs))
     const neck = Array.from({ length: N }, (_, i) => -wave(i / fs - 0.4))
-    const out = analyze({ neck, arterial, fs, meniscusCm: 4.2 })
+    const out = analyze({ neck, arterial, fs, heightCm: 3.7 })
     renderIdentity(identityEl, out.classification)
-    renderCvp(cvpEl, out.cvp)
+    renderJvp(jvpEl, out.jvp)
     drawWaveform(waveform.getContext('2d')!, Float32Array.from(neck), Float32Array.from(arterial), {
       w: waveform.width,
       h: waveform.height,
     })
-    return `${out.classification.label} ${(out.classification.confidence * 100) | 0}% lag=${Math.round(out.classification.lagMs)}ms cvp=${out.cvp.cvpCmH2O.toFixed(1)} ${out.cvp.category}`
+    return `${out.classification.label} ${(out.classification.confidence * 100) | 0}% lag=${Math.round(out.classification.lagMs)}ms jvp=${out.jvp.heightCm.toFixed(1)}cm ${out.jvp.category}`
   }
 }
 

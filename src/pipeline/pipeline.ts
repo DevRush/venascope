@@ -3,7 +3,7 @@ import { grabFrame } from '../capture/camera'
 import { roiVerticalCentroid, roiMeanLuma, clampRoi } from '../capture/roi'
 import { RingBuffer } from '../signal/ringbuffer'
 import { analyze } from './analyze'
-import { renderIdentity, renderCvp, renderAcquiring } from '../ui/panels'
+import { renderIdentity, renderJvp, renderAcquiring } from '../ui/panels'
 import { drawWaveform } from '../ui/waveform'
 import { drawOverlay } from '../ui/overlay'
 import { Magnifier } from '../magnify/evm'
@@ -17,7 +17,7 @@ export interface PipelineDeps {
   overlayCtx: CanvasRenderingContext2D
   waveformCtx: CanvasRenderingContext2D
   identityEl: HTMLElement
-  cvpEl: HTMLElement
+  jvpEl: HTMLElement
   roi: () => Rect
   faceRegion: () => Rect
   sternalY: () => number
@@ -76,10 +76,10 @@ export function createPipeline(deps: PipelineDeps) {
           if (t - lastAnalysis > 500) {
             lastAnalysis = t
             const na = neck.toArray(), aa = arterial.toArray()
-            const meniscusCm = (deps.sternalY() - meniscusY) / deps.pxPerCm
-            const out = analyze({ neck: na, arterial: aa, fs, meniscusCm })
+            const heightCm = (deps.sternalY() - meniscusY) / deps.pxPerCm
+            const out = analyze({ neck: na, arterial: aa, fs, heightCm })
             renderIdentity(deps.identityEl, out.classification)
-            renderCvp(deps.cvpEl, out.cvp)
+            renderJvp(deps.jvpEl, out.jvp)
             drawWaveform(deps.waveformCtx, Float32Array.from(na), Float32Array.from(aa),
               { w: deps.waveformCtx.canvas.width, h: deps.waveformCtx.canvas.height })
           }

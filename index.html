@@ -15,10 +15,13 @@
           <h1>JVP_SCOPE</h1>
           <span class="v">v0.1 &middot; neck volume assessment</span>
         </div>
-        <div class="seg" role="group" aria-label="Mode">
-          <button id="mode-live" class="on" type="button"><span class="d"></span>LIVE</button>
-          <button id="mode-demo" type="button">DEMO</button>
-          <button id="mode-contrast" type="button">CONTRAST</button>
+        <div class="bar-right">
+          <div class="seg" role="group" aria-label="Mode">
+            <button id="mode-live" class="on" type="button"><span class="d"></span>LIVE</button>
+            <button id="mode-demo" type="button">DEMO</button>
+            <button id="mode-contrast" type="button">CONTRAST</button>
+          </div>
+          <button id="help" class="help-btn" type="button" aria-label="How it works">?</button>
         </div>
       </header>
 
@@ -77,22 +80,49 @@
             </div>
           </div>
 
-          <div class="cell" id="cvp">
-            <div class="lab">Estimated CVP</div>
+          <div class="cell" id="jvp">
+            <div class="lab">JVP height <span class="lab-dim">above sternal angle</span></div>
             <div class="cvpwrap">
-              <span class="cvpnum" data-field="cvp">&mdash;</span>
-              <span class="cvpunit">cmH&#8322;O &middot; <span data-field="mmhg">&mdash;</span></span>
+              <span class="cvpnum" data-field="height">&mdash;</span>
+              <span class="cvpunit">cm &middot; <span class="cat" data-field="category">&mdash;</span></span>
             </div>
             <div class="scale">
-              <div class="track"></div>
-              <div class="lo">0</div><div class="hi">20</div>
-              <div class="mk" style="left:0%"></div>
-              <div class="tag" data-field="category">&mdash;</div>
+              <div class="track jvp-track"></div>
+              <div class="lo">0</div><div class="hi">8 cm</div>
+              <div class="mk" data-field="mk" style="left:0%"></div>
             </div>
-            <div class="cvpsub" data-field="band">band &mdash;</div>
+            <div class="cvpsub" data-field="band">acquiring&hellip;</div>
             <div class="note" data-field="warning">Illustrative estimate &mdash; not for clinical use</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- First-run explainer / help overlay -->
+    <div id="intro" class="intro" hidden>
+      <div class="intro-card" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+        <div class="intro-top">
+          <span class="sq"></span>
+          <h2 id="intro-title">JVP&nbsp;Scope</h2>
+        </div>
+        <p class="intro-lede">See the pulse everyone squints for. This makes the jugular venous
+          pulsation <em>visible</em>, proves it's venous — not carotid — and gauges how high the column sits.</p>
+
+        <ol class="intro-steps">
+          <li><b>Frame the neck.</b> Right side, just above the collarbone. Recline ~45°, head turned slightly left.</li>
+          <li><b>Hold still.</b> We magnify a sub-millimeter pulsation and lock onto the jugular column.</li>
+          <li><b>Read it.</b> Venous vs. carotid, the waveform, and the column height.</li>
+        </ol>
+
+        <div class="intro-what">
+          <div><span class="tag ven">Identity</span> venous vs. carotid — from ~180° phase and a ~400&nbsp;ms carotid lag.</div>
+          <div><span class="tag">Waveform</span> the extracted venous pulsation against the arterial reference.</div>
+          <div><span class="tag amber">Column height</span> JVP above the sternal angle — an illustrative estimate.</div>
+        </div>
+
+        <button id="intro-start" class="intro-start" type="button">Start</button>
+        <p class="intro-foot">Proof of concept — the signal pipeline is real; the height is an illustrative
+          estimate, <b>not for clinical use</b>.</p>
       </div>
     </div>
 

@@ -13,13 +13,15 @@ export interface Classification {
 
 export type Category = 'low' | 'normal' | 'elevated'
 
-export interface CvpEstimate {
-  meniscusCm: number
-  cvpCmH2O: number
-  cvpMmHg: number
+// What clinicians actually document: JVP meniscus HEIGHT above the sternal angle (cm).
+// The CVP conversion is an explicitly-assumed right-atrium offset, not a measured pressure.
+export interface JvpEstimate {
+  heightCm: number // meniscus height above the sternal angle
   category: Category
-  bandLow: number
+  bandLow: number // uncertainty band on heightCm
   bandHigh: number
+  raOffsetCm: number // assumed RA-below-sternal-angle offset (labeled assumption, known to vary 5–10 cm)
+  cvpEquivCmH2O: number // = heightCm + raOffsetCm; assumption-derived, not a measured pressure
 }
 
 export type Mode = 'live' | 'demo'
@@ -31,7 +33,7 @@ export interface PipelineState {
   neckSeries: Float32Array
   arterialSeries: Float32Array
   classification: Classification | null
-  cvp: CvpEstimate | null
+  jvp: JvpEstimate | null
   mode: Mode
   quality: Quality
 }

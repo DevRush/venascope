@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { meniscusCmFromPixels, estimateCvp } from './cvp'
+import { meniscusCmFromPixels, estimateJvp } from './cvp'
 
 describe('meniscusCmFromPixels', () => {
   it('converts pixels above the sternal angle to cm', () => {
@@ -8,34 +8,34 @@ describe('meniscusCmFromPixels', () => {
   })
 })
 
-describe('estimateCvp', () => {
-  it('adds the 5 cm reference and classifies elevated', () => {
-    const e = estimateCvp(4.2, 'good')
-    expect(e.cvpCmH2O).toBeCloseTo(9.2, 3)
-    expect(e.cvpMmHg).toBeCloseTo(6.766, 2)
+describe('estimateJvp', () => {
+  it('reports height, an assumed CVP-equivalent, and classifies elevated (>3 cm)', () => {
+    const e = estimateJvp(3.7, 'good')
+    expect(e.heightCm).toBeCloseTo(3.7, 3)
     expect(e.category).toBe('elevated')
-    expect(e.bandLow).toBeCloseTo(7.45, 2)
-    expect(e.bandHigh).toBeCloseTo(10.95, 2)
+    expect(e.raOffsetCm).toBe(5)
+    expect(e.cvpEquivCmH2O).toBeCloseTo(8.7, 3) // heightCm + assumed RA offset
+    expect(e.bandLow).toBeCloseTo(2.7, 3)
+    expect(e.bandHigh).toBeCloseTo(4.7, 3)
   })
-  it('classifies a low column', () => {
-    expect(estimateCvp(-1, 'good').category).toBe('low')
+  it('classifies a low column (<1 cm)', () => {
+    expect(estimateJvp(0.5, 'good').category).toBe('low')
   })
-  it('classifies a normal column', () => {
-    expect(estimateCvp(2, 'good').category).toBe('normal')
+  it('classifies a normal column (1–3 cm)', () => {
+    expect(estimateJvp(2, 'good').category).toBe('normal')
   })
-  it('widens band for poor quality measurement', () => {
-    const e = estimateCvp(4.2, 'poor')
-    expect(e.bandLow).toBeCloseTo(5.7, 2)
-    expect(e.bandHigh).toBeCloseTo(12.7, 2)
+  it('honors a custom RA offset assumption', () => {
+    expect(estimateJvp(3, 'good', 8).cvpEquivCmH2O).toBeCloseTo(11, 3)
   })
-  it('classifies low/normal boundary', () => {
-    const e = estimateCvp(0, 'good')
-    expect(e.cvpCmH2O).toBeCloseTo(5, 3)
-    expect(e.category).toBe('normal')
+  it('widens the band for poor quality', () => {
+    const e = estimateJvp(3, 'poor')
+    expect(e.bandLow).toBeCloseTo(1, 3)
+    expect(e.bandHigh).toBeCloseTo(5, 3)
   })
-  it('classifies normal/elevated boundary', () => {
-    const e = estimateCvp(4, 'good')
-    expect(e.cvpCmH2O).toBeCloseTo(9, 3)
-    expect(e.category).toBe('normal')
+  it('classifies the low/normal boundary at 1 cm as normal', () => {
+    expect(estimateJvp(1, 'good').category).toBe('normal')
+  })
+  it('classifies the normal/elevated boundary at 3 cm as normal', () => {
+    expect(estimateJvp(3, 'good').category).toBe('normal')
   })
 })
