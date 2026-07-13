@@ -1,60 +1,58 @@
-import './style.css'
-import typescriptLogo from './assets/typescript.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import { setupCounter } from './counter.ts'
+// src/main.ts
+import './styles.css'
+import { startCamera, stopCamera } from './capture/camera'
+import { loadDemoClip, createSyntheticSource } from './demo/demoClip'
+import { createPipeline } from './pipeline/pipeline'
+import type { Mode, Rect } from './types'
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${typescriptLogo}" class="framework" alt="TypeScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.ts</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+const video = document.querySelector<HTMLVideoElement>('#video')!
+const gl = document.querySelector<HTMLCanvasElement>('#gl')!
+const overlay = document.querySelector<HTMLCanvasElement>('#overlay')!
+const waveform = document.querySelector<HTMLCanvasElement>('#waveform')!
+const identityEl = document.querySelector<HTMLElement>('#identity')!
+const cvpEl = document.querySelector<HTMLElement>('#cvp')!
+const grabCanvas = document.createElement('canvas')
 
-<div class="ticks"></div>
+overlay.width = 480; overlay.height = 400
+waveform.width = 300; waveform.height = 96
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://www.typescriptlang.org" target="_blank">
-          <img class="button-icon" src="${typescriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+let syntheticEl: HTMLCanvasElement | null = null
+let useSynthetic = false
+let stream: MediaStream | null = null
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+const roi = (): Rect => ({ x: overlay.width * 0.52, y: overlay.height * 0.22, w: 100, h: 170 })
+const faceRegion = (): Rect => ({ x: overlay.width * 0.2, y: overlay.height * 0.05, w: 80, h: 60 })
+const sternalY = () => overlay.height * 0.7
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+const source = (): CanvasImageSource => (useSynthetic && syntheticEl ? syntheticEl : video)
+const sourceSize = () => {
+  if (useSynthetic && syntheticEl) return { w: syntheticEl.width, h: syntheticEl.height }
+  return { w: video.videoWidth, h: video.videoHeight }
+}
+
+const pipeline = createPipeline({
+  source, sourceSize, grabCanvas, glCanvas: gl,
+  overlayCtx: overlay.getContext('2d')!, waveformCtx: waveform.getContext('2d')!,
+  identityEl, cvpEl, roi, faceRegion, sternalY, pxPerCm: 20, fs: 30,
+})
+
+async function setMode(m: Mode) {
+  document.querySelector('#mode-live')?.classList.toggle('on', m === 'live')
+  document.querySelector('#mode-demo')?.classList.toggle('on', m === 'demo')
+  if (stream) { stopCamera(stream); stream = null }
+  if (m === 'live') {
+    useSynthetic = false
+    try { stream = await startCamera(video) }
+    catch { alert('Camera unavailable — switching to demo.'); return setMode('demo') }
+  } else {
+    try { await loadDemoClip(video); useSynthetic = false }
+    catch { syntheticEl = createSyntheticSource(); useSynthetic = true }
+  }
+  pipeline.setMode(m)
+}
+
+document.querySelector('#mode-live')?.addEventListener('click', () => setMode('live'))
+document.querySelector('#mode-demo')?.addEventListener('click', () => setMode('demo'))
+
+pipeline.start()
+setMode('live')
