@@ -27,8 +27,11 @@
         <div class="cam" id="camera">
           <video id="video" playsinline muted></video>
 
+          <!-- Live magnified camera output (bottom layer) -->
+          <canvas id="gl"></canvas>
+
+          <!-- Anatomical guide-lines + labels, semi-transparent over the video -->
           <svg class="scene" viewBox="0 0 420 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-            <path d="M150 -20 C 175 100, 150 240, 210 420 L 420 420 L 420 -20 Z" fill="#5c4136" opacity="0.42"/>
             <path d="M262 40 C 246 155, 278 260, 330 380" stroke="#5f8fce" stroke-width="1.2" fill="none" opacity="0.6"/>
             <path d="M224 46 C 218 165, 246 268, 280 386" stroke="#d8795f" stroke-width="1.6" fill="none" opacity="0.75"/>
             <path d="M276 46 C 274 165, 296 268, 322 386" stroke="#4cc2b0" stroke-width="1.8" fill="none" opacity="0.85"/>
@@ -37,7 +40,7 @@
           <div class="ann" style="left:31%;top:56%;color:#d8795f;"><span class="dot" style="background:#d8795f"></span>carotid a.</div>
           <div class="ann" style="left:70%;top:66%;color:#4cc2b0;"><span class="dot" style="background:#4cc2b0"></span>internal jugular v.</div>
 
-          <canvas id="gl"></canvas>
+          <!-- Dynamic measurement layer: ROI reticle, crosshair, cm ruler, meniscus (top) -->
           <canvas id="overlay"></canvas>
 
           <div class="cbar">
