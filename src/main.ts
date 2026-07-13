@@ -195,7 +195,7 @@ document.querySelector('#mode-contrast')?.addEventListener('click', (e) => {
   contrastOn = !contrastOn
   ;(e.currentTarget as HTMLElement).classList.toggle('on', contrastOn)
   const magEl = hudEl.querySelector('b') // first HUD value is the MAG chip
-  if (magEl) magEl.textContent = contrastOn ? '×24' : '×9'
+  if (magEl) magEl.textContent = contrastOn ? '×10' : 'off'
 })
 
 // First-run explainer: show once, reopenable via the header "?".

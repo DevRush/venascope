@@ -38,8 +38,11 @@ export function createPipeline(deps: PipelineDeps) {
   const magnifier = new Magnifier(deps.glCanvas.getContext('webgl')!)
   const fs = deps.fs || FS_DEFAULT
   const sampleInterval = 1000 / fs // fixed sampling cadence, independent of the rAF frame rate
-  const MAGNIFY = 9 // base amplification; high enough to see, low enough not to blow out
-  const CONTRAST_MAGNIFY = 24 // dialed-up "relief" view that exaggerates the pulsation motion
+  // Default LIVE view is the CLEAN feed (amp 0) — a recognizable camera image to aim with, with the
+  // overlays doing the identifying. Motion magnification amplifies ALL motion (hand-shake, breathing),
+  // which is unusable as a default on a handheld camera; it's the opt-in CONTRAST "relief" view instead.
+  const MAGNIFY = 0
+  const CONTRAST_MAGNIFY = 10
   let raf = 0
   let lastAnalysis = 0
   let lastSample = 0
