@@ -184,6 +184,8 @@ html, body {
   color: var(--dim);
 }
 .cbar b { color: var(--ink); font-weight: 500; }
+#hud[data-track="poor"] [data-field="track"] { color: var(--amber); }
+#hud[data-track="acquiring"] [data-field="track"] { color: var(--dim); }
 
 /* live/demo status pill, top-left of the camera */
 .status {
@@ -457,8 +459,19 @@ html, body {
   font-family: ui-monospace, monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
 }
 .intro-start:hover { filter: brightness(1.08); }
-.intro-foot { font-size: 10.5px; color: var(--faint); line-height: 1.5; margin: 14px 0 0; text-align: center; }
+.intro-foot { font-size: 10.5px; color: var(--faint); line-height: 1.6; margin: 14px 0 0; text-align: center; }
 .intro-foot b { color: var(--amber); font-weight: 600; }
+.intro-priv { color: var(--ven); }
+
+/* plain-language notes */
+.idnote {
+  margin-top: 11px; font-size: 10.5px; line-height: 1.5; color: var(--faint);
+}
+.idnote b { color: var(--dim); font-weight: 600; }
+.wnote {
+  padding: 0 10px 8px; font-family: ui-monospace, monospace; font-size: 8.5px;
+  color: var(--faint); letter-spacing: 0.02em;
+}
 
 /* responsive: stack on narrow screens (phone is a likely demo device) */
 @media (max-width: 760px) {

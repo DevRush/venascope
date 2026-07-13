@@ -18,6 +18,7 @@ export interface PipelineDeps {
   waveformCtx: CanvasRenderingContext2D
   identityEl: HTMLElement
   jvpEl: HTMLElement
+  hudEl: HTMLElement
   roi: () => Rect
   faceRegion: () => Rect
   sternalY: () => number
@@ -38,9 +39,25 @@ export function createPipeline(deps: PipelineDeps) {
   let raf = 0
   let lastAnalysis = 0
   let lastSample = 0
+  let fpsFrames = 0, fpsT0 = 0
+
+  const setHud = (field: string, text: string) => {
+    const el = deps.hudEl.querySelector(`[data-field=${field}]`)
+    if (el) el.textContent = text
+  }
+  const setTrack = (state: 'stable' | 'poor' | 'acquiring', text: string) => {
+    deps.hudEl.dataset.track = state
+    setHud('track', text)
+  }
 
   const loop = (t: number) => {
     const { w, h } = deps.sourceSize()
+    fpsFrames++
+    if (t - fpsT0 >= 500) {
+      setHud('fps', String(Math.round(fpsFrames / ((t - fpsT0) / 1000))))
+      fpsFrames = 0
+      fpsT0 = t
+    }
     if (w && h) {
       try {
       // Magnify every animation frame for a smooth live view.
@@ -82,10 +99,12 @@ export function createPipeline(deps: PipelineDeps) {
             renderJvp(deps.jvpEl, out.jvp)
             drawWaveform(deps.waveformCtx, Float32Array.from(na), Float32Array.from(aa),
               { w: deps.waveformCtx.canvas.width, h: deps.waveformCtx.canvas.height })
+            setTrack(out.quality === 'good' ? 'stable' : 'poor', out.quality === 'good' ? 'stable' : 'low signal')
           }
         } else {
           // Warm-up: show acquisition progress so the panel never looks dead.
           renderAcquiring(deps.identityEl, (neck.length / cap) * 100)
+          setTrack('acquiring', 'acquiring')
         }
       }
       } catch (err) {

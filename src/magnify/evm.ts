@@ -1,4 +1,9 @@
 // src/magnify/evm.ts
+//
+// Temporal-bandpass motion magnification (EVM-INSPIRED, not full Eulerian video magnification).
+// Per pixel we keep two exponential moving averages (fast, slow); their difference is a cheap
+// ~0.7–3 Hz temporal band that we amplify and add back to the frame. There is deliberately no
+// spatial pyramid — this is a real-time WebGL simplification, honestly labeled as such.
 const VERT = `
 attribute vec2 p; varying vec2 uv;
 void main(){ uv = vec2(p.x*0.5+0.5, 0.5-p.y*0.5); gl_Position = vec4(p,0.0,1.0); }`

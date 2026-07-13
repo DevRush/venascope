@@ -14,6 +14,7 @@ const overlay = document.querySelector<HTMLCanvasElement>('#overlay')!
 const waveform = document.querySelector<HTMLCanvasElement>('#waveform')!
 const identityEl = document.querySelector<HTMLElement>('#identity')!
 const jvpEl = document.querySelector<HTMLElement>('#jvp')!
+const hudEl = document.querySelector<HTMLElement>('#hud')!
 const statusEl = document.querySelector<HTMLElement>('#status')!
 const grabCanvas = document.createElement('canvas')
 
@@ -51,6 +52,7 @@ const pipeline = createPipeline({
   waveformCtx: waveform.getContext('2d')!,
   identityEl,
   jvpEl,
+  hudEl,
   roi,
   faceRegion,
   sternalY,

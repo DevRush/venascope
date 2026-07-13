@@ -40,7 +40,7 @@ Camera in → seven stages, each a self-contained module with a clean interface 
 | # | Stage | Module | Does | Real / Illustrative |
 |---|-------|--------|------|---------------------|
 | 0 | Capture | `capture/` | `getUserMedia` → frames on canvas; draggable/resizable ROI over the neck | Real |
-| 1 | Magnify | `magnify/` | WebGL linear Eulerian video magnification (spatial blur → temporal bandpass ~0.7–3 Hz → amplify → recomposite) on the ROI | Real |
+| 1 | Magnify | `magnify/` | WebGL temporal-bandpass magnification (EVM-*inspired*): per-pixel two-pole EMA-difference band (fast−slow, ~0.7–3 Hz) amplified and recomposited. No spatial pyramid — a real-time WebGL simplification of full Eulerian video magnification, honestly labeled as such. | Real |
 | 2 | Waveform | `signal/` | Reduce ROI to a 1-D signal (row-intensity centroid / optical-flow vertical displacement) → detrend → bandpass → live trace; tag a/c/x/v/y | Real |
 | 3 | Arterial ref | `rppg/` | rPPG off a face region (cheek/forehead green channel) for arterial timing reference; in demo mode, use the clip's known reference | Real |
 | 4 | Discriminate | `discriminate/` | Cross-correlate ROI signal vs arterial ref → sign of correlation + temporal lag; venous ≈ 180° out of phase and lags carotid ~400 ms → classify + confidence | Real |

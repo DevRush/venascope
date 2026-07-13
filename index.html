@@ -48,8 +48,8 @@
 
           <div id="status" class="status" data-tone="demo">Initializing&hellip;</div>
 
-          <div class="cbar">
-            <span>MAG <b>&times;9</b></span><span>BAND <b>0.7&ndash;3.0 Hz</b></span><span>FPS <b>60</b></span><span>TRACK <b>stable</b></span>
+          <div class="cbar" id="hud" data-track="acquiring">
+            <span>MAG <b>&times;9</b></span><span>BAND <b>0.7&ndash;3.0 Hz</b></span><span>FPS <b data-field="fps">&ndash;</b></span><span>TRACK <b data-field="track">&hellip;</b></span>
           </div>
         </div>
 
@@ -66,6 +66,8 @@
               <div><div class="k">Phase offset</div><div class="val"><span data-field="phase">&mdash;</span></div></div>
               <div><div class="k">Carotid lag</div><div class="val"><span data-field="lag">&mdash;</span></div></div>
             </div>
+            <div class="idnote">Venous pulsation is <b>out of phase</b> with, and <b>lags</b>, the carotid.
+              Confidence scores how well the signal matches that expected timing &mdash; not a blind classifier.</div>
           </div>
 
           <div class="cell">
@@ -75,8 +77,9 @@
               <div class="wleg">
                 <span><i class="sw" style="border-color:#4cc2b0"></i>venous</span>
                 <span><i class="sw" style="border-color:#d8795f;border-top-style:dashed"></i>arterial ref</span>
-                <span>4.0 s window &middot; a c x v y</span>
+                <span>4.0 s window</span>
               </div>
+              <div class="wnote">a&middot;c&middot;x&middot;v&middot;y venous landmarks &mdash; schematic, assumes sinus rhythm</div>
             </div>
           </div>
 
@@ -122,7 +125,9 @@
 
         <button id="intro-start" class="intro-start" type="button">Start</button>
         <p class="intro-foot">Proof of concept — the signal pipeline is real; the height is an illustrative
-          estimate, <b>not for clinical use</b>.</p>
+          estimate, <b>not for clinical use</b>.<br>
+          <span class="intro-priv">No video ever leaves your device.</span> Assumes sinus rhythm, ~45° recline,
+          and a fixed anatomical scale; green-channel signal is lighting- and skin-tone-sensitive.</p>
       </div>
     </div>
 
