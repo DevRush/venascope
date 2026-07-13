@@ -410,6 +410,30 @@ html, body {
 }
 .help-btn:hover { color: var(--ink); border-color: var(--ven); }
 
+.icon-btn {
+  width: 26px; height: 26px; border-radius: 6px; padding: 0;
+  border: 1px solid var(--line2); background: var(--panel); color: var(--dim);
+  font-size: 13px; line-height: 1; cursor: pointer; flex: none;
+}
+.icon-btn:hover { color: var(--ink); border-color: var(--ven); }
+#cam-power.on { color: var(--ven); border-color: rgba(76, 194, 176, 0.45); }
+
+/* camera-off state */
+.cam-off-msg {
+  display: none;
+  position: absolute; inset: 0; z-index: 6;
+  align-items: center; justify-content: center;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
+  letter-spacing: 0.04em; color: var(--dim); background: #0a0b0d; cursor: pointer;
+}
+.cam.cam-off .cam-off-msg { display: flex; }
+.cam.cam-off #gl,
+.cam.cam-off .scene,
+.cam.cam-off #overlay,
+.cam.cam-off .ann,
+.cam.cam-off .cbar,
+.cam.cam-off .status { opacity: 0; }
+
 /* JVP height cell */
 .lab-dim { color: var(--faint); text-transform: none; letter-spacing: 0; font-weight: 400; }
 .cat { text-transform: capitalize; color: var(--dim); }

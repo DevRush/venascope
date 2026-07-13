@@ -21,6 +21,8 @@
             <button id="mode-demo" type="button">DEMO</button>
             <button id="mode-contrast" type="button">CONTRAST</button>
           </div>
+          <button id="cam-flip" class="icon-btn" type="button" aria-label="Flip front/rear camera" title="Flip front/rear camera">&#8646;</button>
+          <button id="cam-power" class="icon-btn on" type="button" aria-label="Camera on/off" title="Camera on/off">&#9211;</button>
           <button id="help" class="help-btn" type="button" aria-label="How it works">?</button>
         </div>
       </header>
@@ -47,6 +49,7 @@
           <canvas id="overlay"></canvas>
 
           <div id="status" class="status" data-tone="demo">Initializing&hellip;</div>
+          <div id="cam-off-msg" class="cam-off-msg">&#9211;&ensp;Camera off &mdash; tap to resume</div>
 
           <div class="cbar" id="hud" data-track="acquiring">
             <span>MAG <b>off</b></span><span>BAND <b>0.7&ndash;3.0 Hz</b></span><span>FPS <b data-field="fps">&ndash;</b></span><span>TRACK <b data-field="track">&hellip;</b></span>

@@ -1,6 +1,6 @@
 // src/main.ts — app entry: wires camera/demo sources into the pipeline and the mode UI.
 import './styles.css'
-import { startCamera, stopCamera } from './capture/camera'
+import { startCamera, stopCamera, type Facing } from './capture/camera'
 import { loadDemoClip, createSyntheticSource } from './demo/demoClip'
 import { createPipeline } from './pipeline/pipeline'
 import { analyze } from './pipeline/analyze'
@@ -28,6 +28,8 @@ waveform.height = 96
 let syntheticEl: HTMLCanvasElement | null = null
 let useSynthetic = false
 let stream: MediaStream | null = null
+let facing: Facing = 'environment' // rear camera by default
+let cameraOn = true
 
 const overlayCtx = overlay.getContext('2d')!
 // Assumed anatomical scale, tied to panel height so the reading is size-independent
@@ -163,16 +165,26 @@ async function setMode(m: Mode) {
 
   if (m === 'live') {
     useSynthetic = false
+    if (!cameraOn) {
+      // Camera powered off — show the "off" state, keep the loop idle (no source frames).
+      video.srcObject = null
+      cam.classList.add('cam-off')
+      setStatus('Camera off', 'warn')
+      pipeline.setMode(m)
+      return
+    }
+    cam.classList.remove('cam-off')
     setStatus('Requesting camera…', 'live')
     try {
-      stream = await startCamera(video)
-      setStatus('Live camera', 'live')
+      stream = await startCamera(video, facing)
+      setStatus(facing === 'environment' ? 'Live · rear camera' : 'Live · front camera', 'live')
     } catch {
       // No blocking dialog — degrade straight into demo mode.
       setStatus('Camera unavailable — running demo', 'warn')
       return setMode('demo')
     }
   } else {
+    cam.classList.remove('cam-off')
     video.srcObject = null
     useSynthetic = false
     setStatus('Loading demo clip…', 'demo')
@@ -196,6 +208,26 @@ document.querySelector('#mode-contrast')?.addEventListener('click', (e) => {
   ;(e.currentTarget as HTMLElement).classList.toggle('on', contrastOn)
   const magEl = hudEl.querySelector('b') // first HUD value is the MAG chip
   if (magEl) magEl.textContent = contrastOn ? '×10' : 'off'
+})
+
+// Camera power on/off.
+document.querySelector('#cam-power')?.addEventListener('click', () => {
+  cameraOn = !cameraOn
+  document.querySelector('#cam-power')?.classList.toggle('on', cameraOn)
+  begin()          // ensure the loop has started even if the user never hit Start
+  setMode('live')  // (re)acquire or stop the camera
+})
+// Tap the "camera off" panel to resume.
+document.querySelector('#cam-off-msg')?.addEventListener('click', () => {
+  if (!cameraOn) (document.querySelector('#cam-power') as HTMLElement | null)?.click()
+})
+// Flip front/rear.
+document.querySelector('#cam-flip')?.addEventListener('click', () => {
+  facing = facing === 'environment' ? 'user' : 'environment'
+  cameraOn = true
+  document.querySelector('#cam-power')?.classList.add('on')
+  begin()
+  setMode('live') // re-acquire with the new camera
 })
 
 // First-run explainer: show once, reopenable via the header "?".
