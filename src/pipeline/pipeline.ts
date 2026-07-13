@@ -3,7 +3,7 @@ import { grabFrame } from '../capture/camera'
 import { roiVerticalCentroid, roiMeanLuma, clampRoi } from '../capture/roi'
 import { RingBuffer } from '../signal/ringbuffer'
 import { analyze } from './analyze'
-import { renderIdentity, renderCvp } from '../ui/panels'
+import { renderIdentity, renderCvp, renderAcquiring } from '../ui/panels'
 import { drawWaveform } from '../ui/waveform'
 import { drawOverlay } from '../ui/overlay'
 import { Magnifier } from '../magnify/evm'
@@ -72,15 +72,20 @@ export function createPipeline(deps: PipelineDeps) {
         neck.push(roiVerticalCentroid(frame, scale(deps.roi())))
         arterial.push(roiMeanLuma(frame, scale(deps.faceRegion())))
 
-        if (t - lastAnalysis > 500 && neck.full && arterial.full) {
-          lastAnalysis = t
-          const na = neck.toArray(), aa = arterial.toArray()
-          const meniscusCm = (deps.sternalY() - meniscusY) / deps.pxPerCm
-          const out = analyze({ neck: na, arterial: aa, fs, meniscusCm })
-          renderIdentity(deps.identityEl, out.classification)
-          renderCvp(deps.cvpEl, out.cvp)
-          drawWaveform(deps.waveformCtx, Float32Array.from(na), Float32Array.from(aa),
-            { w: deps.waveformCtx.canvas.width, h: deps.waveformCtx.canvas.height })
+        if (neck.full && arterial.full) {
+          if (t - lastAnalysis > 500) {
+            lastAnalysis = t
+            const na = neck.toArray(), aa = arterial.toArray()
+            const meniscusCm = (deps.sternalY() - meniscusY) / deps.pxPerCm
+            const out = analyze({ neck: na, arterial: aa, fs, meniscusCm })
+            renderIdentity(deps.identityEl, out.classification)
+            renderCvp(deps.cvpEl, out.cvp)
+            drawWaveform(deps.waveformCtx, Float32Array.from(na), Float32Array.from(aa),
+              { w: deps.waveformCtx.canvas.width, h: deps.waveformCtx.canvas.height })
+          }
+        } else {
+          // Warm-up: show acquisition progress so the panel never looks dead.
+          renderAcquiring(deps.identityEl, (neck.length / cap) * 100)
         }
       }
       } catch (err) {
