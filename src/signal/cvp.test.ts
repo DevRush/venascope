@@ -23,4 +23,19 @@ describe('estimateCvp', () => {
   it('classifies a normal column', () => {
     expect(estimateCvp(2, 'good').category).toBe('normal')
   })
+  it('widens band for poor quality measurement', () => {
+    const e = estimateCvp(4.2, 'poor')
+    expect(e.bandLow).toBeCloseTo(5.7, 2)
+    expect(e.bandHigh).toBeCloseTo(12.7, 2)
+  })
+  it('classifies low/normal boundary', () => {
+    const e = estimateCvp(0, 'good')
+    expect(e.cvpCmH2O).toBeCloseTo(5, 3)
+    expect(e.category).toBe('normal')
+  })
+  it('classifies normal/elevated boundary', () => {
+    const e = estimateCvp(4, 'good')
+    expect(e.cvpCmH2O).toBeCloseTo(9, 3)
+    expect(e.category).toBe('normal')
+  })
 })
