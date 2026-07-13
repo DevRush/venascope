@@ -44,6 +44,7 @@ export class Magnifier {
   private si = 0
   private w = 0
   private h = 0
+  private warm = false // false until the EMA accumulators are seeded from the first frame
   private gl: WebGLRenderingContext
 
   constructor(gl: WebGLRenderingContext) {
@@ -82,6 +83,7 @@ export class Magnifier {
     this.fast = [this.target(), this.target()]
     this.slow = [this.target(), this.target()]
     this.fi = 0; this.si = 0
+    this.warm = false // re-seed accumulators for the new size
   }
 
   private drawQuad(prog: WebGLProgram) {
@@ -115,8 +117,13 @@ export class Magnifier {
       this.drawQuad(this.emaProg)
       return idx ^ 1
     }
-    this.fi = step(this.fast, this.fi, 1 / Math.max(fastTau, 1))
-    this.si = step(this.slow, this.si, 1 / Math.max(slowTau, 1))
+    // First frame after (re)size: seed both accumulators to the frame (alpha = 1) so the
+    // very first composite is `frame + amp*0 = frame` — no black-start blow-out.
+    const aFast = this.warm ? 1 / Math.max(fastTau, 1) : 1
+    const aSlow = this.warm ? 1 / Math.max(slowTau, 1) : 1
+    this.fi = step(this.fast, this.fi, aFast)
+    this.si = step(this.slow, this.si, aSlow)
+    this.warm = true
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)

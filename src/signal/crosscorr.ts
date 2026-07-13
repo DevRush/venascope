@@ -13,12 +13,15 @@ export function pearson(a: number[], b: number[]): number {
   return den === 0 ? 0 : num / den
 }
 
-// Returns the lag of peak ABSOLUTE correlation and its signed value in `corr`.
-// Lag sign follows a[i] ~ b[i-lag] (positive lag => a is delayed vs b); the
-// peak may be an antiphase alignment (corr < 0), which venous discrimination relies on.
-export function bestLag(a: number[], b: number[], maxLag: number): { lag: number; corr: number } {
+// Returns the lag of peak ABSOLUTE correlation and its signed value in `corr`, searching
+// integer lags in [minLag, maxLag]. Lag sign follows a[i] ~ b[i-lag] (positive lag => a is
+// delayed vs b); the peak may be an antiphase alignment (corr < 0), which venous
+// discrimination relies on. A bounded window avoids half-period aliasing on periodic signals.
+export function bestLagInRange(
+  a: number[], b: number[], minLag: number, maxLag: number,
+): { lag: number; corr: number } {
   let best = { lag: 0, corr: 0 }
-  for (let lag = -maxLag; lag <= maxLag; lag++) {
+  for (let lag = minLag; lag <= maxLag; lag++) {
     const av: number[] = [], bv: number[] = []
     for (let i = 0; i < a.length; i++) {
       const j = i - lag
@@ -29,6 +32,11 @@ export function bestLag(a: number[], b: number[], maxLag: number): { lag: number
     if (Math.abs(c) > Math.abs(best.corr)) best = { lag, corr: c }
   }
   return best
+}
+
+// Symmetric convenience wrapper: searches [-maxLag, maxLag].
+export function bestLag(a: number[], b: number[], maxLag: number): { lag: number; corr: number } {
+  return bestLagInRange(a, b, -maxLag, maxLag)
 }
 
 export function dominantFreq(x: number[], fs: number): number {

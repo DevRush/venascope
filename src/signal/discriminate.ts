@@ -1,4 +1,4 @@
-import { pearson, bestLag, dominantFreq } from './crosscorr'
+import { pearson, bestLagInRange, dominantFreq } from './crosscorr'
 import type { Classification, Label } from '../types'
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
@@ -6,8 +6,13 @@ const wrap = (deg: number) => { let d = deg % 360; if (d > 180) d -= 360; if (d 
 
 export function classify(neck: number[], arterial: number[], fs: number): Classification {
   const p = pearson(neck, arterial)
-  const maxLag = Math.round(0.6 * fs)
-  const { lag, corr } = bestLag(neck, arterial, maxLag)
+  // Search a physiological lag window: the venous pulse lags the carotid by a POSITIVE
+  // ~200–450 ms, while the carotid itself is near zero lag. Bounding to [-0.15 s, +0.55 s]
+  // avoids the half-period antiphase alias that a symmetric search would pick on a
+  // quasi-periodic signal (which would otherwise report a spurious negative lag).
+  const minLag = -Math.round(0.15 * fs)
+  const maxLag = Math.round(0.55 * fs)
+  const { lag, corr } = bestLagInRange(neck, arterial, minLag, maxLag)
   const lagMs = (lag / fs) * 1000
   const freq = dominantFreq(arterial, fs) || 1.2
   const phaseDeg = wrap(360 * (lag / fs) * freq)
