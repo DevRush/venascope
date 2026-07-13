@@ -4,10 +4,94 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>vite-scaffold</title>
+    <title>JVP Scope</title>
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <div id="app"></div>
+    <div class="shell">
+      <header class="bar">
+        <div class="bhead">
+          <span class="sq"></span>
+          <h1>JVP_SCOPE</h1>
+          <span class="v">v0.1 &middot; neck volume assessment</span>
+        </div>
+        <div class="seg" role="group" aria-label="Mode">
+          <button id="mode-live" class="on" type="button"><span class="d"></span>LIVE</button>
+          <button id="mode-demo" type="button">DEMO</button>
+          <button id="mode-contrast" type="button">CONTRAST</button>
+        </div>
+      </header>
+
+      <div class="grid">
+        <!-- CAMERA -->
+        <div class="cam" id="camera">
+          <video id="video" playsinline muted></video>
+
+          <svg class="scene" viewBox="0 0 420 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <path d="M150 -20 C 175 100, 150 240, 210 420 L 420 420 L 420 -20 Z" fill="#5c4136" opacity="0.42"/>
+            <path d="M262 40 C 246 155, 278 260, 330 380" stroke="#5f8fce" stroke-width="1.2" fill="none" opacity="0.6"/>
+            <path d="M224 46 C 218 165, 246 268, 280 386" stroke="#d8795f" stroke-width="1.6" fill="none" opacity="0.75"/>
+            <path d="M276 46 C 274 165, 296 268, 322 386" stroke="#4cc2b0" stroke-width="1.8" fill="none" opacity="0.85"/>
+          </svg>
+          <div class="ann" style="left:39%;top:12%;color:#5f8fce;"><span class="dot" style="background:#5f8fce"></span>sternocleidomastoid</div>
+          <div class="ann" style="left:31%;top:56%;color:#d8795f;"><span class="dot" style="background:#d8795f"></span>carotid a.</div>
+          <div class="ann" style="left:70%;top:66%;color:#4cc2b0;"><span class="dot" style="background:#4cc2b0"></span>internal jugular v.</div>
+
+          <canvas id="gl"></canvas>
+          <canvas id="overlay"></canvas>
+
+          <div class="cbar">
+            <span>MAG <b>&times;18</b></span><span>BAND <b>0.7&ndash;3.0 Hz</b></span><span>FPS <b>60</b></span><span>TRACK <b>stable</b></span>
+          </div>
+        </div>
+
+        <!-- RIGHT RAIL -->
+        <div class="rail">
+          <div class="cell" id="identity">
+            <div class="lab">Pulsation identity</div>
+            <div class="idrow">
+              <div class="idname"><span data-field="label">&mdash;</span><small>distinguished from carotid</small></div>
+              <div class="idpct"><span data-field="confidence">&mdash;</span></div>
+            </div>
+            <div class="meter"><i style="width:0%"></i></div>
+            <div class="readouts">
+              <div><div class="k">Phase offset</div><div class="val"><span data-field="phase">&mdash;</span></div></div>
+              <div><div class="k">Carotid lag</div><div class="val"><span data-field="lag">&mdash;</span></div></div>
+            </div>
+          </div>
+
+          <div class="cell">
+            <div class="lab">Extracted waveform</div>
+            <div class="wave">
+              <canvas id="waveform"></canvas>
+              <div class="wleg">
+                <span><i class="sw" style="border-color:#4cc2b0"></i>venous</span>
+                <span><i class="sw" style="border-color:#d8795f;border-top-style:dashed"></i>arterial ref</span>
+                <span>2.0 s window &middot; a c x v y</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cell" id="cvp">
+            <div class="lab">Estimated CVP</div>
+            <div class="cvpwrap">
+              <span class="cvpnum" data-field="cvp">&mdash;</span>
+              <span class="cvpunit">cmH&#8322;O &middot; <span data-field="mmhg">&mdash;</span></span>
+            </div>
+            <div class="scale">
+              <div class="track"></div>
+              <div class="lo">0</div><div class="hi">20</div>
+              <div class="mk" style="left:0%"></div>
+              <div class="tag" data-field="category">&mdash;</div>
+            </div>
+            <div class="cvpsub" data-field="band">band &mdash;</div>
+            <div class="note" data-field="warning">Illustrative estimate &mdash; not for clinical use</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="app" style="display:none"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
