@@ -15,7 +15,7 @@ export function pearson(a: number[], b: number[]): number {
 
 // positive lag => a lags b (a[i] ~ b[i-lag])
 export function bestLag(a: number[], b: number[], maxLag: number): { lag: number; corr: number } {
-  let best = { lag: 0, corr: -Infinity }
+  let best = { lag: 0, corr: 0 }
   for (let lag = -maxLag; lag <= maxLag; lag++) {
     const av: number[] = [], bv: number[] = []
     for (let i = 0; i < a.length; i++) {
@@ -24,7 +24,7 @@ export function bestLag(a: number[], b: number[], maxLag: number): { lag: number
     }
     if (av.length < 8) continue
     const c = pearson(av, bv)
-    if (c > best.corr) best = { lag, corr: c }
+    if (Math.abs(c) > Math.abs(best.corr)) best = { lag, corr: c }
   }
   return best
 }
