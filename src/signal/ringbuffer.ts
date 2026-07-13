@@ -1,6 +1,7 @@
 export class RingBuffer {
   private buf: number[] = []
-  constructor(public readonly capacity: number) {}
+  readonly capacity: number
+  constructor(capacity: number) { this.capacity = capacity }
   push(v: number): void {
     this.buf.push(v)
     if (this.buf.length > this.capacity) this.buf.shift()
