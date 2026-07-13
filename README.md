@@ -1,4 +1,4 @@
-# JVP Scope
+# VenaScope
 
 **See the pulse everyone squints for.** A browser turns a webcam into a jugular-venous-pressure
 instrument: it magnifies the invisible neck pulsation, extracts its waveform, **proves it's venous
@@ -14,7 +14,7 @@ instrument: it magnifies the invisible neck pulsation, extracts its waveform, **
 Bedside JVP is the standard tool for volume assessment, yet it's notoriously unreliable — in the
 AMPLIFY pilot, bedside exam disagreed *categorically* with right-heart catheterization **27%** of the
 time. Half the difficulty is simply that the venous pulsation is a sub-millimeter, low-frequency
-undulation that's easily confused with the carotid. JVP Scope makes that pulsation **visible and
+undulation that's easily confused with the carotid. VenaScope makes that pulsation **visible and
 measurable**, and — its crown jewel — **discriminates venous from arterial** using the same physiology
 a cardiologist uses, just measured instead of eyeballed.
 
