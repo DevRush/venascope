@@ -1,6 +1,6 @@
 // src/pipeline/pipeline.ts
 import { grabFrame } from '../capture/camera'
-import { roiVerticalCentroid, roiMeanLuma, clampRoi } from '../capture/roi'
+import { roiBandCentroid, roiMeanLuma, clampRoi } from '../capture/roi'
 import { RingBuffer } from '../signal/ringbuffer'
 import { respiratoryVariationCm } from '../signal/respiration'
 import { analyze } from './analyze'
@@ -90,7 +90,7 @@ export function createPipeline(deps: PipelineDeps) {
           w: (r.w / ow) * frame.width,
           h: (r.h / oh) * frame.height,
         }, frame.width, frame.height)
-        const neckVal = roiVerticalCentroid(frame, scale(deps.roi()))
+        const neckVal = roiBandCentroid(frame, scale(deps.roi()))
         neck.push(neckVal)
         respBuf.push(neckVal)
         arterial.push(roiMeanLuma(frame, scale(deps.faceRegion())))

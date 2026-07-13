@@ -1,6 +1,21 @@
 import { describe, it, expect } from 'vitest'
-import { clampRoi, roiVerticalCentroid, roiMeanLuma } from './roi'
+import { clampRoi, roiVerticalCentroid, roiBandCentroid, roiMeanLuma } from './roi'
 import type { Rect } from '../types'
+
+// A vertical luminance gradient (skin) with a bright band centred at `bandY`.
+function gradBandImage(w: number, h: number, bandY: number): ImageData {
+  const data = new Uint8ClampedArray(w * h * 4)
+  for (let y = 0; y < h; y++) {
+    const grad = 60 + 100 * (y / h)
+    for (let x = 0; x < w; x++) {
+      const v = Math.min(255, grad + (Math.abs(y - bandY) < 3 ? 120 : 0))
+      const i = (y * w + x) * 4
+      data[i] = data[i + 1] = data[i + 2] = v
+      data[i + 3] = 255
+    }
+  }
+  return { data, width: w, height: h, colorSpace: 'srgb' } as ImageData
+}
 
 // Build an ImageData with a bright horizontal band at rows [y0,y1)
 function bandImage(w: number, h: number, y0: number, y1: number): ImageData {
@@ -48,6 +63,23 @@ describe('roiVerticalCentroid', () => {
     const clamped = clampRoi(roi, img.width, img.height)
     const y = roiVerticalCentroid(img, roi)
     expect(y).toBe(clamped.y + clamped.h / 2)
+  })
+})
+
+describe('roiBandCentroid', () => {
+  const roi: Rect = { x: 0, y: 0, w: 40, h: 100 }
+  it('tracks the bright band on a gradient background', () => {
+    const y = roiBandCentroid(gradBandImage(40, 100, 50), roi)
+    expect(y).toBeGreaterThan(47)
+    expect(y).toBeLessThan(53)
+  })
+  it('transfers band motion far better than a whole-ROI centroid', () => {
+    const a = gradBandImage(40, 100, 40)
+    const b = gradBandImage(40, 100, 60) // band moved 20 px
+    const bandShift = Math.abs(roiBandCentroid(b, roi) - roiBandCentroid(a, roi))
+    const centroidShift = Math.abs(roiVerticalCentroid(b, roi) - roiVerticalCentroid(a, roi))
+    expect(bandShift).toBeGreaterThan(15) // tracks most of the 20 px move
+    expect(bandShift).toBeGreaterThan(centroidShift * 3) // much more sensitive than the plain centroid
   })
 })
 
