@@ -397,6 +397,9 @@ html, body {
   color: var(--faint);
   margin-top: 8px;
 }
+.resp-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.resp-row .resp-k { color: var(--faint); }
+.resp-row [data-field="resp"] { color: var(--ven); }
 
 /* header right cluster + help */
 .bar-right { display: flex; align-items: center; gap: 10px; }

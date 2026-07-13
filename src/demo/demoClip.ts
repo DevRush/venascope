@@ -66,9 +66,11 @@ export function createSyntheticSource(): HTMLCanvasElement {
     ctx.fillRect(178, 40, 30, 175)
     ctx.restore()
 
-    // Venous "meniscus" — a soft bright band that rides up/down with the venous signal.
-    const neckMidY = 120
-    const meniscusY = neckMidY + ven * 16
+    // Venous "meniscus" — a soft bright band that rides up/down with the venous (cardiac) signal,
+    // on a slow respiratory drift (JVP falls on inspiration → the column breathes up and down).
+    const neckMidY = 118
+    const resp = Math.sin(2 * Math.PI * 0.25 * t) * 18 // ~15 breaths/min
+    const meniscusY = neckMidY + ven * 16 + resp
     const mg = ctx.createLinearGradient(0, meniscusY - 12, 0, meniscusY + 12)
     mg.addColorStop(0, 'rgba(210,225,230,0)')
     mg.addColorStop(0.5, 'rgba(210,232,228,0.55)')

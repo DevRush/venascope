@@ -2,6 +2,7 @@
 import { grabFrame } from '../capture/camera'
 import { roiVerticalCentroid, roiMeanLuma, clampRoi } from '../capture/roi'
 import { RingBuffer } from '../signal/ringbuffer'
+import { respiratoryVariationCm } from '../signal/respiration'
 import { analyze } from './analyze'
 import { renderIdentity, renderJvp, renderAcquiring } from '../ui/panels'
 import { drawWaveform } from '../ui/waveform'
@@ -32,6 +33,7 @@ export function createPipeline(deps: PipelineDeps) {
   const cap = Math.round(4 * (deps.fs || FS_DEFAULT)) // 4 s analysis window
   const neck = new RingBuffer(cap)
   const arterial = new RingBuffer(cap)
+  const respBuf = new RingBuffer(Math.round(12 * (deps.fs || FS_DEFAULT))) // ~3 breaths for respiratory variation
   const magnifier = new Magnifier(deps.glCanvas.getContext('webgl')!)
   const fs = deps.fs || FS_DEFAULT
   const sampleInterval = 1000 / fs // fixed sampling cadence, independent of the rAF frame rate
@@ -86,7 +88,9 @@ export function createPipeline(deps: PipelineDeps) {
           w: (r.w / ow) * frame.width,
           h: (r.h / oh) * frame.height,
         }, frame.width, frame.height)
-        neck.push(roiVerticalCentroid(frame, scale(deps.roi())))
+        const neckVal = roiVerticalCentroid(frame, scale(deps.roi()))
+        neck.push(neckVal)
+        respBuf.push(neckVal)
         arterial.push(roiMeanLuma(frame, scale(deps.faceRegion())))
 
         if (neck.full && arterial.full) {
@@ -100,6 +104,15 @@ export function createPipeline(deps: PipelineDeps) {
             drawWaveform(deps.waveformCtx, Float32Array.from(na), Float32Array.from(aa),
               { w: deps.waveformCtx.canvas.width, h: deps.waveformCtx.canvas.height })
             setTrack(out.quality === 'good' ? 'stable' : 'poor', out.quality === 'good' ? 'stable' : 'low signal')
+
+            // Respiratory variation — the meniscus swing with breathing (needs ~5 s of data).
+            const respEl = deps.jvpEl.querySelector('[data-field=resp]')
+            if (respEl) {
+              const respCm = respBuf.length >= fs * 5
+                ? respiratoryVariationCm(respBuf.toArray(), fs, deps.pxPerCm)
+                : null
+              respEl.textContent = respCm == null ? 'acquiring…' : `${respCm.toFixed(1)} cm with respiration`
+            }
           }
         } else {
           // Warm-up: show acquisition progress so the panel never looks dead.

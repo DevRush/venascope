@@ -4,6 +4,7 @@ import { startCamera, stopCamera } from './capture/camera'
 import { loadDemoClip, createSyntheticSource } from './demo/demoClip'
 import { createPipeline } from './pipeline/pipeline'
 import { analyze } from './pipeline/analyze'
+import { respiratoryVariationCm } from './signal/respiration'
 import { renderIdentity, renderJvp } from './ui/panels'
 import { drawWaveform } from './ui/waveform'
 import { drawOverlay } from './ui/overlay'
@@ -186,6 +187,11 @@ if (import.meta.env.DEV) {
     const out = analyze({ neck, arterial, fs, heightCm: 3.7 })
     renderIdentity(identityEl, out.classification)
     renderJvp(jvpEl, out.jvp)
+    const centroid = Array.from({ length: fs * 12 }, (_, i) =>
+      200 + 18 * Math.sin(2 * Math.PI * 0.25 * (i / fs)) + 16 * Math.sin(2 * Math.PI * 1.2 * (i / fs)))
+    const respCm = respiratoryVariationCm(centroid, fs, 45)
+    const respEl = jvpEl.querySelector('[data-field=resp]')
+    if (respEl) respEl.textContent = `${respCm.toFixed(1)} cm with respiration`
     drawWaveform(waveform.getContext('2d')!, Float32Array.from(neck), Float32Array.from(arterial), {
       w: waveform.width,
       h: waveform.height,
