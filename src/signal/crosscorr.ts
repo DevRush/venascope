@@ -13,7 +13,9 @@ export function pearson(a: number[], b: number[]): number {
   return den === 0 ? 0 : num / den
 }
 
-// positive lag => a lags b (a[i] ~ b[i-lag])
+// Returns the lag of peak ABSOLUTE correlation and its signed value in `corr`.
+// Lag sign follows a[i] ~ b[i-lag] (positive lag => a is delayed vs b); the
+// peak may be an antiphase alignment (corr < 0), which venous discrimination relies on.
 export function bestLag(a: number[], b: number[], maxLag: number): { lag: number; corr: number } {
   let best = { lag: 0, corr: 0 }
   for (let lag = -maxLag; lag <= maxLag; lag++) {
