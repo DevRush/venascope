@@ -6,6 +6,7 @@ import { createPipeline } from './pipeline/pipeline'
 import { analyze } from './pipeline/analyze'
 import { renderIdentity, renderJvp } from './ui/panels'
 import { drawWaveform } from './ui/waveform'
+import { drawOverlay } from './ui/overlay'
 import type { Mode, Rect } from './types'
 
 const video = document.querySelector<HTMLVideoElement>('#video')!
@@ -27,9 +28,59 @@ let syntheticEl: HTMLCanvasElement | null = null
 let useSynthetic = false
 let stream: MediaStream | null = null
 
-const roi = (): Rect => ({ x: overlay.width * 0.52, y: overlay.height * 0.22, w: 100, h: 170 })
+const PX_PER_CM = 45 // assumed anatomical scale for the demo (would be user-calibrated live)
+const overlayCtx = overlay.getContext('2d')!
+
+// Draggable calibration state (overlay-canvas pixel space).
+let roiRect: Rect = { x: overlay.width * 0.52, y: overlay.height * 0.22, w: 100, h: 170 }
+let sternalYVal = overlay.height * 0.7
 const faceRegion = (): Rect => ({ x: overlay.width * 0.2, y: overlay.height * 0.05, w: 80, h: 60 })
-const sternalY = () => overlay.height * 0.7
+const roi = () => roiRect
+const sternalY = () => sternalYVal
+
+// Redraw the measurement overlay immediately (independent of the rAF loop) so dragging is responsive.
+function redrawOverlay() {
+  drawOverlay(overlayCtx, roiRect, {
+    w: overlay.width,
+    h: overlay.height,
+    sternalY: sternalYVal,
+    pxPerCm: PX_PER_CM,
+    meniscusY: roiRect.y + roiRect.h * 0.15,
+  })
+}
+redrawOverlay()
+
+// Drag the ROI box or the sternal-angle line (mouse + touch via pointer events).
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+const toCanvas = (e: PointerEvent) => {
+  const r = overlay.getBoundingClientRect()
+  return { x: ((e.clientX - r.left) / r.width) * overlay.width, y: ((e.clientY - r.top) / r.height) * overlay.height }
+}
+const inRoi = (p: { x: number; y: number }) =>
+  p.x >= roiRect.x && p.x <= roiRect.x + roiRect.w && p.y >= roiRect.y && p.y <= roiRect.y + roiRect.h
+let drag: 'roi' | 'sternal' | null = null
+let dragOff = { x: 0, y: 0 }
+overlay.addEventListener('pointerdown', (e) => {
+  const p = toCanvas(e)
+  if (Math.abs(p.y - sternalYVal) < 16) drag = 'sternal'
+  else if (inRoi(p)) { drag = 'roi'; dragOff = { x: p.x - roiRect.x, y: p.y - roiRect.y } }
+  if (drag) { overlay.setPointerCapture(e.pointerId); overlay.style.cursor = 'grabbing' }
+})
+overlay.addEventListener('pointermove', (e) => {
+  const p = toCanvas(e)
+  if (!drag) {
+    overlay.style.cursor = Math.abs(p.y - sternalYVal) < 16 ? 'row-resize' : inRoi(p) ? 'grab' : 'default'
+    return
+  }
+  if (drag === 'sternal') sternalYVal = clamp(p.y, 24, overlay.height - 4)
+  else {
+    roiRect = { ...roiRect, x: clamp(p.x - dragOff.x, 0, overlay.width - roiRect.w), y: clamp(p.y - dragOff.y, 0, overlay.height - roiRect.h) }
+  }
+  redrawOverlay()
+})
+const endDrag = () => { drag = null; overlay.style.cursor = 'grab' }
+overlay.addEventListener('pointerup', endDrag)
+overlay.addEventListener('pointercancel', endDrag)
 
 const source = (): CanvasImageSource => (useSynthetic && syntheticEl ? syntheticEl : video)
 const sourceSize = () => {
@@ -48,7 +99,7 @@ const pipeline = createPipeline({
   sourceSize,
   grabCanvas,
   glCanvas: gl,
-  overlayCtx: overlay.getContext('2d')!,
+  overlayCtx,
   waveformCtx: waveform.getContext('2d')!,
   identityEl,
   jvpEl,
@@ -56,7 +107,7 @@ const pipeline = createPipeline({
   roi,
   faceRegion,
   sternalY,
-  pxPerCm: 45, // assumed anatomical scale for the demo (would be user-calibrated live)
+  pxPerCm: PX_PER_CM,
   fs: 30,
 })
 

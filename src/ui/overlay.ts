@@ -35,6 +35,14 @@ export function drawOverlay(
     ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx + 7, y); ctx.stroke()
     ctx.fillText(String(cm), rx + 10, y + 3)
   }
+  // sternal-angle reference line (draggable) — the zero of the ruler
+  ctx.strokeStyle = 'rgba(139,145,156,0.55)'
+  ctx.setLineDash([5, 4])
+  ctx.beginPath(); ctx.moveTo(0, sternalY); ctx.lineTo(w, sternalY); ctx.stroke()
+  ctx.setLineDash([])
+  ctx.fillStyle = '#8b919c'
+  ctx.fillText('sternal angle', 10, sternalY - 5)
+
   // meniscus line
   ctx.strokeStyle = '#4cc2b0'
   ctx.beginPath(); ctx.moveTo(rx - 30, meniscusY); ctx.lineTo(rx + 7, meniscusY); ctx.stroke()
