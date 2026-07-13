@@ -3,6 +3,7 @@ import { grabFrame } from '../capture/camera'
 import { roiBandCentroid, roiMeanLuma, clampRoi } from '../capture/roi'
 import { RingBuffer } from '../signal/ringbuffer'
 import { respiratoryVariationCm } from '../signal/respiration'
+import { fuseNeckSignal } from '../signal/fuse'
 import { analyze } from './analyze'
 import { renderIdentity, renderJvp, renderAcquiring } from '../ui/panels'
 import { drawWaveform } from '../ui/waveform'
@@ -32,7 +33,8 @@ const FS_DEFAULT = 30
 
 export function createPipeline(deps: PipelineDeps) {
   const cap = Math.round(4 * (deps.fs || FS_DEFAULT)) // 4 s analysis window
-  const neck = new RingBuffer(cap)
+  const neck = new RingBuffer(cap) // neck MOTION (band centroid) — also drives height/respiratory
+  const neckColour = new RingBuffer(cap) // neck COLOUR (mean luma) — perfusion/rPPG channel
   const arterial = new RingBuffer(cap)
   const respBuf = new RingBuffer(Math.round(12 * (deps.fs || FS_DEFAULT))) // ~3 breaths for respiratory variation
   const magnifier = new Magnifier(deps.glCanvas.getContext('webgl')!)
@@ -93,20 +95,25 @@ export function createPipeline(deps: PipelineDeps) {
           w: (r.w / ow) * frame.width,
           h: (r.h / oh) * frame.height,
         }, frame.width, frame.height)
-        const neckVal = roiBandCentroid(frame, scale(deps.roi()))
+        const neckRoi = scale(deps.roi())
+        const neckVal = roiBandCentroid(frame, neckRoi) // motion (meniscus position)
         neck.push(neckVal)
-        respBuf.push(neckVal)
+        neckColour.push(roiMeanLuma(frame, neckRoi)) // colour (perfusion) at the same ROI
+        respBuf.push(neckVal) // respiratory + height are position-based → motion channel
         arterial.push(roiMeanLuma(frame, scale(deps.faceRegion())))
 
         if (neck.full && arterial.full) {
           if (t - lastAnalysis > 500) {
             lastAnalysis = t
-            const na = neck.toArray(), aa = arterial.toArray()
+            const aa = arterial.toArray()
+            // Fuse the neck's motion + colour channels; use the more pulsatile one for the
+            // pulse waveform + venous/carotid discrimination (real footage shows either can carry it).
+            const fused = fuseNeckSignal(neck.toArray(), neckColour.toArray(), fs)
             const heightCm = (deps.sternalY() - meniscusY) / deps.pxPerCm()
-            const out = analyze({ neck: na, arterial: aa, fs, heightCm })
+            const out = analyze({ neck: fused.signal, arterial: aa, fs, heightCm })
             renderIdentity(deps.identityEl, out.classification)
             renderJvp(deps.jvpEl, out.jvp)
-            drawWaveform(deps.waveformCtx, Float32Array.from(na), Float32Array.from(aa),
+            drawWaveform(deps.waveformCtx, Float32Array.from(fused.signal), Float32Array.from(aa),
               { w: deps.waveformCtx.canvas.width, h: deps.waveformCtx.canvas.height })
             setTrack(out.quality === 'good' ? 'stable' : 'poor', out.quality === 'good' ? 'stable' : 'low signal')
 
