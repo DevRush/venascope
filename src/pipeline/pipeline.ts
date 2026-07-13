@@ -42,8 +42,14 @@ export function createPipeline(deps: PipelineDeps) {
       magnifier.render(deps.source() as TexImageSource, 18, 3, 30)
 
       const frame = grabFrame(deps.source(), Math.min(w, 320), Math.min(h, 240), deps.grabCanvas)
-      const sx = frame.width / w, sy = frame.height / h
-      const scale = (r: Rect): Rect => clampRoi({ x: r.x * sx, y: r.y * sy, w: r.w * sx, h: r.h * sy }, frame.width, frame.height)
+      const ow = deps.overlayCtx.canvas.width
+      const oh = deps.overlayCtx.canvas.height
+      const scale = (r: Rect): Rect => clampRoi({
+        x: (r.x / ow) * frame.width,
+        y: (r.y / oh) * frame.height,
+        w: (r.w / ow) * frame.width,
+        h: (r.h / oh) * frame.height,
+      }, frame.width, frame.height)
       neck.push(roiVerticalCentroid(frame, scale(deps.roi())))
       arterial.push(roiMeanLuma(frame, scale(deps.faceRegion())))
 

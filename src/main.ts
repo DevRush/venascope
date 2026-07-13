@@ -45,6 +45,7 @@ async function setMode(m: Mode) {
     try { stream = await startCamera(video) }
     catch { alert('Camera unavailable — switching to demo.'); return setMode('demo') }
   } else {
+    video.srcObject = null
     try { await loadDemoClip(video); useSynthetic = false }
     catch { syntheticEl = createSyntheticSource(); useSynthetic = true }
   }

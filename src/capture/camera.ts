@@ -7,7 +7,12 @@ export async function startCamera(video: HTMLVideoElement): Promise<MediaStream>
   await new Promise<void>((res) => {
     video.onloadedmetadata = () => res()
   })
-  await video.play()
+  try {
+    await video.play()
+  } catch (err) {
+    stream.getTracks().forEach((t) => t.stop())
+    throw err
+  }
   return stream
 }
 
