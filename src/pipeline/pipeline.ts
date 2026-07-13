@@ -23,6 +23,7 @@ export interface PipelineDeps {
   roi: () => Rect
   faceRegion: () => Rect
   sternalY: () => number
+  contrast: () => boolean // amplified-motion ("relief") view toggle
   pxPerCm: number
   fs: number
 }
@@ -37,7 +38,8 @@ export function createPipeline(deps: PipelineDeps) {
   const magnifier = new Magnifier(deps.glCanvas.getContext('webgl')!)
   const fs = deps.fs || FS_DEFAULT
   const sampleInterval = 1000 / fs // fixed sampling cadence, independent of the rAF frame rate
-  const MAGNIFY = 9 // amplification for the motion band; high enough to see, low enough not to blow out
+  const MAGNIFY = 9 // base amplification; high enough to see, low enough not to blow out
+  const CONTRAST_MAGNIFY = 24 // dialed-up "relief" view that exaggerates the pulsation motion
   let raf = 0
   let lastAnalysis = 0
   let lastSample = 0
@@ -65,7 +67,7 @@ export function createPipeline(deps: PipelineDeps) {
       // Magnify every animation frame for a smooth live view.
       if (deps.glCanvas.width !== w) deps.glCanvas.width = w
       if (deps.glCanvas.height !== h) deps.glCanvas.height = h
-      magnifier.render(deps.source() as TexImageSource, MAGNIFY, 3, 30)
+      magnifier.render(deps.source() as TexImageSource, deps.contrast() ? CONTRAST_MAGNIFY : MAGNIFY, 3, 30)
 
       const roi = deps.roi()
       const meniscusY = roi.y + roi.h * 0.15 // meniscus proxy: top of the ROI column — illustrative
@@ -74,6 +76,7 @@ export function createPipeline(deps: PipelineDeps) {
       drawOverlay(deps.overlayCtx, roi, {
         w: deps.overlayCtx.canvas.width, h: deps.overlayCtx.canvas.height,
         sternalY: deps.sternalY(), pxPerCm: deps.pxPerCm, meniscusY,
+        faceRegion: deps.faceRegion(),
       })
 
       // Sample the signal at a fixed rate so lag/frequency estimates are calibrated to `fs`.

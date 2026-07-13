@@ -38,6 +38,8 @@ let sternalYVal = overlay.height * 0.7
 const faceRegion = (): Rect => ({ x: overlay.width * 0.2, y: overlay.height * 0.05, w: 80, h: 60 })
 const roi = () => roiRect
 const sternalY = () => sternalYVal
+let contrastOn = false
+const contrast = () => contrastOn
 
 // Redraw the measurement overlay immediately (independent of the rAF loop) so dragging is responsive.
 function redrawOverlay() {
@@ -47,6 +49,7 @@ function redrawOverlay() {
     sternalY: sternalYVal,
     pxPerCm: PX_PER_CM,
     meniscusY: roiRect.y + roiRect.h * 0.15,
+    faceRegion: faceRegion(),
   })
 }
 redrawOverlay()
@@ -108,6 +111,7 @@ const pipeline = createPipeline({
   roi,
   faceRegion,
   sternalY,
+  contrast,
   pxPerCm: PX_PER_CM,
   fs: 30,
 })
@@ -163,17 +167,33 @@ async function setMode(m: Mode) {
 
 document.querySelector('#mode-live')?.addEventListener('click', () => setMode('live'))
 document.querySelector('#mode-demo')?.addEventListener('click', () => setMode('demo'))
+// CONTRAST is an independent visualization toggle (dials up the motion amplification),
+// not a source like Live/Demo — it toggles its own state.
+document.querySelector('#mode-contrast')?.addEventListener('click', (e) => {
+  contrastOn = !contrastOn
+  ;(e.currentTarget as HTMLElement).classList.toggle('on', contrastOn)
+  const magEl = hudEl.querySelector('b') // first HUD value is the MAG chip
+  if (magEl) magEl.textContent = contrastOn ? '×24' : '×9'
+})
 
 // First-run explainer: show once, reopenable via the header "?".
+// The camera is only requested once the user dismisses the intro (via Start), so the
+// permission prompt never fires underneath the modal.
 const intro = document.querySelector<HTMLElement>('#intro')
 const showIntro = () => intro?.removeAttribute('hidden')
 const hideIntro = () => intro?.setAttribute('hidden', '')
+let started = false
+function begin() {
+  if (started) return
+  started = true
+  setMode('live')
+}
 document.querySelector('#intro-start')?.addEventListener('click', () => {
   hideIntro()
   try { localStorage.setItem('jvp-intro-seen', '1') } catch { /* private mode */ }
+  begin()
 })
 document.querySelector('#help')?.addEventListener('click', showIntro)
-try { if (!localStorage.getItem('jvp-intro-seen')) showIntro() } catch { showIntro() }
 
 // DEV-only render probe: runs one real analyze() cycle on the demo signals and paints
 // the panels, so the render path can be verified where rAF is throttled (hidden tab).
@@ -201,4 +221,9 @@ if (import.meta.env.DEV) {
 }
 
 pipeline.start()
-setMode('live')
+try {
+  if (localStorage.getItem('jvp-intro-seen')) begin() // returning visitor: skip intro, go live
+  else showIntro() // first run: wait for Start before requesting the camera
+} catch {
+  showIntro()
+}

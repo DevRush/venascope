@@ -3,10 +3,19 @@ import type { Rect } from '../types'
 
 export function drawOverlay(
   ctx: CanvasRenderingContext2D, roi: Rect,
-  opts: { w: number; h: number; sternalY: number; pxPerCm: number; meniscusY: number },
+  opts: { w: number; h: number; sternalY: number; pxPerCm: number; meniscusY: number; faceRegion?: Rect },
 ): void {
-  const { w, h, sternalY, pxPerCm, meniscusY } = opts
+  const { w, h, sternalY, pxPerCm, meniscusY, faceRegion } = opts
   ctx.clearRect(0, 0, w, h)
+
+  // Arterial-reference region (rPPG source) — shown so the user knows to keep the face in view.
+  if (faceRegion) {
+    ctx.strokeStyle = 'rgba(216,121,95,0.5)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1
+    ctx.strokeRect(faceRegion.x, faceRegion.y, faceRegion.w, faceRegion.h)
+    ctx.setLineDash([])
+    ctx.fillStyle = 'rgba(216,121,95,0.9)'; ctx.font = '8px ui-monospace, monospace'
+    ctx.fillText('arterial ref', faceRegion.x, faceRegion.y - 4)
+  }
 
   // ROI box + corner ticks
   ctx.strokeStyle = 'rgba(76,194,176,0.55)'; ctx.lineWidth = 1
